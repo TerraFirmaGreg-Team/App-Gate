@@ -1,8 +1,8 @@
-name:  "Project Build"
+name: "Project Build"
 run-name: "[📦]: Project Build #${{ github.run_number }}"
 on:
   push:
-    branches: 
+    branches:
       - main
 
 permissions:
@@ -43,14 +43,20 @@ jobs:
           ls -la build/libs/
 
       - name: "[🚀] Release"
-        uses: ncipollo/release-action@v1
+        uses: Xikaro/game-publish@3.4.0
         with:
-          tag: ${{ steps.project_info.outputs.version }}
-          name: ${{ steps.project_info.outputs.version }}
-          commit: ${{ github.sha }}
-          artifacts: build/libs/App-Gate.jar
-          artifactErrorsFailBuild: true
-          generateReleaseNotes: true
-          skipIfReleaseExists: true
-          immutableCreate: true
-          makeLatest: true
+
+          github-name: ${{ needs.project_info.outputs.version }}
+          github-tag: ${{ needs.project_info.outputs.version }}
+          github-generate-changelog: true
+          github-draft: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+          files: ${{ needs.project_info.outputs.projectName }}.jar
+
+          name: ${{ needs.project_info.outputs.projectName }}
+          version: ${{ needs.project_info.outputs.version }}
+
+          retry-attempts: 2
+          retry-delay: 10000
+          fail-mode: fail

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import team.terrafirmagreg.appgate.config.AppDiscovery;
 import team.terrafirmagreg.appgate.config.Config;
 import team.terrafirmagreg.appgate.ui.Log;
 
@@ -59,7 +60,9 @@ public final class ConsoleAttach {
         if (consoleName.get() != null) {
             return;
         }
-        if (appId.equals(config.console())) {
+        String wanted = config.console();
+        if (wanted != null
+                && (appId.equals(wanted) || appId.equals(AppDiscovery.idFromJar(wanted)))) {
             consoleName.set(appId);
             Log.info("Console auto-attached to " + appId);
         }
@@ -69,27 +72,21 @@ public final class ConsoleAttach {
         if (config.console() != null) {
             String wanted = config.console();
             for (JarInspector.DiscoveredApp app : discovered) {
-                String id = config.appIdForJar(app.jarFileName());
-                if (id == null) {
-                    id = app.shortName();
-                }
-                if (wanted.equals(id)
-                        || wanted.equals(app.shortName())
-                        || wanted.equals(app.mainClass())) {
+                String id = AppDiscovery.idFromJar(app.jarFileName());
+                if (wanted.equals(id) || wanted.equals(app.jarFileName())) {
                     return id;
                 }
             }
             throw new IOException("Configured console not found among discovered apps: " + wanted);
         }
         if (discovered.size() == 1) {
-            String id = config.appIdForJar(discovered.getFirst().jarFileName());
-            return id != null ? id : discovered.getFirst().shortName();
+            return AppDiscovery.idFromJar(discovered.getFirst().jarFileName());
         }
         if (discovered.isEmpty()) {
             return null;
         }
         throw new IOException("Multiple apps discovered but config.console is not set. "
-                + "Set \"console\" to a main-class short name (e.g. ApiServer)");
+                + "Set \"console\" to a jar name without .jar (e.g. my-api)");
     }
 
     void setInitial(String appId) {

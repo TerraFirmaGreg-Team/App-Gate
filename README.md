@@ -12,7 +12,7 @@ Requires **Java 25** on the egg. Child apps can still use Temurin 8/17/21/25 via
   App-Gate.jar
   config.json
   apps/*.jar
-  data/<appId>/     # each app's working directory (cwd)
+  data/<jarName>/   # cwd per app (jar basename without .jar)
   jdk/8|17|21|25/   # downloaded as needed
 ```
 
@@ -27,9 +27,9 @@ Type '/help' for available commands
 
 ## Apps
 
-Identity comes from `Main-Class` (short name; FQN on collision). Launch is `java -cp <jar> <MainClass>` with
-cwd `data/<appId>/` so relative paths stay per-app. Config syncs on discovery; set `"console": "ApiServer"` (or omit if
-only one app).
+Identity comes from the JAR filename (basename without `.jar`). Launch is `java -cp <jar> <MainClass>` with cwd
+`data/<jarName>/` so relative paths stay per-app. Config syncs on discovery; set `"console": "my-api"` for
+`apps/my-api.jar` (or omit if only one app).
 
 ## Proxy
 

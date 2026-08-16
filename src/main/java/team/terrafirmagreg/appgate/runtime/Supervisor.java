@@ -15,6 +15,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import team.terrafirmagreg.appgate.config.AppDiscovery;
 import team.terrafirmagreg.appgate.config.AppEntry;
 import team.terrafirmagreg.appgate.config.Config;
 import team.terrafirmagreg.appgate.config.ResolvedApp;
@@ -71,11 +72,7 @@ public final class Supervisor implements AutoCloseable {
         console.setInitial(console.resolveInitial(discovered));
 
         for (JarInspector.DiscoveredApp app : discovered) {
-            String appId = config.appIdForJar(app.jarFileName());
-            if (appId == null) {
-                appId = app.shortName();
-            }
-            startApp(appId, false);
+            startApp(AppDiscovery.idFromJar(app.jarFileName()), false);
         }
     }
 
@@ -97,10 +94,7 @@ public final class Supervisor implements AutoCloseable {
             config.save(configPath);
             Log.info("Updated " + configPath.toAbsolutePath());
         }
-        String appId = config.appIdForJar(jarFileName);
-        if (appId == null) {
-            appId = discovered.get().shortName();
-        }
+        String appId = AppDiscovery.idFromJar(jarFileName);
         Integer needed = config.resolve(appId).javaVersion();
         if (needed != null) {
             jdkManager.ensureVersion(needed);
@@ -113,10 +107,7 @@ public final class Supervisor implements AutoCloseable {
     }
 
     public synchronized void removeByJar(String jarFileName) {
-        String appId = config.appIdForJar(jarFileName);
-        if (appId != null) {
-            removeApp(appId);
-        }
+        removeApp(AppDiscovery.idFromJar(jarFileName));
     }
 
     public synchronized void startApp(String appId, boolean fromHotReload) throws IOException {
@@ -328,8 +319,7 @@ public final class Supervisor implements AutoCloseable {
             }
             discovered.add(app.get());
         }
-        discovered.sort(Comparator.comparing(JarInspector.DiscoveredApp::shortName)
-                .thenComparing(JarInspector.DiscoveredApp::jarFileName));
+        discovered.sort(Comparator.comparing(JarInspector.DiscoveredApp::jarFileName));
         return discovered;
     }
 
