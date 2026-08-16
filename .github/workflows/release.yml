@@ -1,0 +1,56 @@
+name:  "Project Build"
+run-name: "[📦]: Project Build #${{ github.run_number }}"
+on:
+  push:
+    branches: 
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: "[🚀] Release"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "[📦] Checkout"
+        uses: actions/checkout@v6
+
+      - name: "[📥] Get Project Info"
+        id: project_info
+        uses: christian-draeger/read-properties@1.1.1
+        with:
+          path: gradle.properties
+          properties: version javaVersion
+
+      - name: "[⚙️] Set up Java"
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ steps.project_info.outputs.javaVersion }}
+
+      - name: "[⚙️] Set up Gradle"
+        uses: gradle/actions/setup-gradle@v6
+
+       - name: "[🔨] Build artifact"
+        run: |
+          chmod +x gradlew
+          ./gradlew build
+          ls -la build/libs/
+
+      - name: "[🚀] Release"
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.project_info.outputs.version }}
+          name: ${{ steps.project_info.outputs.version }}
+          commit: ${{ github.sha }}
+          artifacts: build/libs/App-Gate.jar
+          artifactErrorsFailBuild: true
+          generateReleaseNotes: true
+          skipIfReleaseExists: true
+          immutableCreate: true
+          makeLatest: true
